@@ -1,0 +1,56 @@
+Sub GenerarConciliacion_con_Chat_GPT()
+    Dim wsBase1 As Worksheet
+    Dim wsBase2 As Worksheet
+    Dim lastRowBase1 As Long
+    Dim lastRowBase2 As Long
+    Dim base1Range As Range
+    Dim base2Range As Range
+    Dim base2Dict As Object
+    Dim cell As Range
+    Dim key As String
+    
+    ' Definir las hojas de trabajo
+    Set wsBase1 = ThisWorkbook.Sheets("Base1")
+    Set wsBase2 = ThisWorkbook.Sheets("Base2")
+    
+    ' Obtener la última fila en cada hoja
+    lastRowBase1 = wsBase1.Cells(wsBase1.Rows.Count, "A").End(xlUp).Row
+    lastRowBase2 = wsBase2.Cells(wsBase2.Rows.Count, "A").End(xlUp).Row
+    
+    ' Definir el rango de datos en cada hoja
+    Set base1Range = wsBase1.Range("A2:D" & lastRowBase1)
+    Set base2Range = wsBase2.Range("A2:E" & lastRowBase2)
+    
+    ' Crear un diccionario para almacenar los registros de la Base2
+    Set base2Dict = CreateObject("Scripting.Dictionary")
+    
+    ' Iterar sobre los registros de la Base2 y guardarlos en el diccionario
+    For Each cell In base2Range.Columns(1).Cells
+        key = cell.Value & "_" & cell.Offset(0, 1).Value & "_" & cell.Offset(0, 2).Value
+        If Not base2Dict.Exists(key) Then
+            base2Dict.Add key, cell.Row
+        End If
+    Next cell
+    
+    ' Marcar los registros que cruzan y los que no en la Base1
+    For Each cell In base1Range.Columns(1).Cells
+        key = cell.Value & "_" & cell.Offset(0, 1).Value & "_" & cell.Offset(0, 2).Value
+        If base2Dict.Exists(key) Then
+            wsBase1.Cells(cell.Row, 5).Value = "Cruza"
+            wsBase2.Cells(base2Dict(key), 6).Value = "Cruza"
+        Else
+            wsBase1.Cells(cell.Row, 5).Value = "No Cruza"
+        End If
+    Next cell
+    
+    ' Limpiar el diccionario de memoria
+    Set base2Dict = Nothing
+    
+    ' Ajustar el ancho de las columnas para mostrar los resultados
+    wsBase1.Columns("E").AutoFit
+    wsBase2.Columns("F").AutoFit
+    
+    ' Mostrar mensaje de finalización
+    MsgBox "La conciliación se ha completado."
+End Sub
+
